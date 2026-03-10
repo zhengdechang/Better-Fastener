@@ -310,7 +310,7 @@ export default function BulkImportPage() {
       </div>
       <h1 className="text-2xl font-bold text-zinc-900">批量导入商品</h1>
       <p className="mt-2 text-sm text-zinc-500">
-        支持完整参数：名称、英文名、型号、描述、分类、图片URL（分号分隔）、材质、标准、规格、表面处理、硬度、应用等，与 Made-in-China 产品结构对齐。格式说明见项目根目录{" "}
+        支持完整参数：名称、英文名、型号、描述、分类、材质、标准、规格、表面处理、硬度、应用等（不含图片，图片在商品编辑页单独上传）。格式说明见项目根目录{" "}
         <code className="rounded bg-zinc-100 px-1">BULK_IMPORT_FORMAT.md</code>
       </p>
 
