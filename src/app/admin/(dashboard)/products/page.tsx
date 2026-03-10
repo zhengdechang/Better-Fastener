@@ -22,12 +22,20 @@ export default function AdminProductsPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900">商品管理</h1>
-        <Link
-          href="/admin/products/new"
-          className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
-        >
-          新建商品
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/products/bulk"
+            className="rounded border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          >
+            批量导入
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+          >
+            新建商品
+          </Link>
+        </div>
       </div>
       {products.length === 0 ? (
         <p className="mt-8 text-zinc-500">暂无商品</p>
