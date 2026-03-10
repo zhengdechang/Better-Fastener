@@ -18,6 +18,10 @@ export default function EditProductPage() {
     seoTitle: "",
     seoDesc: "",
   });
+  const [images, setImages] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -37,11 +41,82 @@ export default function EditProductPage() {
           seoTitle: product.seoTitle || "",
           seoDesc: product.seoDesc || "",
         });
+        setImages(Array.isArray(product.images) ? product.images : []);
       }
       setCategories(catData.categories || []);
       setLoading(false);
     });
   }, [id]);
+
+  const handleAddImageUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = imageUrl.trim();
+    if (!url || !url.startsWith("http")) {
+      setImageError("请输入有效的图片 URL");
+      return;
+    }
+    setImageError("");
+    setImageLoading(true);
+    try {
+      const res = await fetch(`/api/admin/products/${id}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImageError(data.error || "添加失败");
+        return;
+      }
+      setImages(data.images || []);
+      setImageUrl("");
+    } catch {
+      setImageError("网络错误");
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    setImageError("");
+    setImageLoading(true);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const res = await fetch(`/api/admin/products/${id}/images`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImageError(data.error || "上传失败");
+        return;
+      }
+      setImages(data.images || []);
+    } catch {
+      setImageError("网络错误");
+    } finally {
+      setImageLoading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    setImageLoading(true);
+    try {
+      const res = await fetch(`/api/admin/products/${id}/images`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index }),
+      });
+      const data = await res.json();
+      if (res.ok) setImages(data.images || []);
+    } finally {
+      setImageLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +199,68 @@ export default function EditProductPage() {
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium">图片管理</label>
+          <p className="mt-1 text-xs text-zinc-500">
+            图片与商品信息单独管理，在此上传或添加图片 URL
+          </p>
+          {images.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {images.map((url, i) => (
+                <div key={i} className="group relative">
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-20 w-20 rounded border object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect fill='%23ddd' width='80' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='10'%3E加载失败%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(i)}
+                    disabled={imageLoading}
+                    className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-xs text-white hover:bg-red-600 disabled:opacity-50"
+                  >
+                    删除
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-0 left-0 rounded bg-zinc-900 px-1 text-[10px] text-white">主图</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <form onSubmit={handleAddImageUrl} className="flex gap-2">
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="粘贴图片 URL"
+                className="w-64 rounded border px-3 py-1.5 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={imageLoading}
+                className="rounded border px-3 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50"
+              >
+                添加
+              </button>
+            </form>
+            <label className="cursor-pointer rounded border px-3 py-1.5 text-sm hover:bg-zinc-50">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUploadImage}
+                disabled={imageLoading}
+                className="hidden"
+              />
+              {imageLoading ? "处理中..." : "本地上传"}
+            </label>
+          </div>
+          {imageError && <p className="mt-1 text-sm text-red-600">{imageError}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium">描述</label>

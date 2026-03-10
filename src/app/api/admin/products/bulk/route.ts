@@ -11,7 +11,6 @@ type BulkProductInput = {
   description?: string | null;
   categorySlug?: string | null;
   slug?: string | null;
-  images?: string[] | string | null;
   material?: string | null;
   standard?: string | null;
   size?: string | null;
@@ -100,16 +99,6 @@ export async function POST(request: NextRequest) {
     const slug = resolveSlug(baseSlug);
     const categoryId = await getCategoryId(p.categorySlug);
 
-    const imagesRaw = p.images;
-    const images: string[] | null = Array.isArray(imagesRaw)
-      ? (imagesRaw.map((u) => str(u)).filter(Boolean) as string[])
-      : typeof imagesRaw === "string"
-        ? imagesRaw
-            .split(/[;|]/)
-            .map((u) => u.trim())
-            .filter(Boolean) || null
-        : null;
-
     const specsBase =
       p.specs && typeof p.specs === "object" && !Array.isArray(p.specs)
         ? (p.specs as Record<string, unknown>)
@@ -133,17 +122,16 @@ export async function POST(request: NextRequest) {
         .where(eq(schema.products.slug, slug))
         .limit(1);
 
-      const commonData = {
-        name,
-        slug,
-        nameEn: str(p.nameEn),
-        description: str(p.description),
-        categoryId,
-        images: images && images.length > 0 ? images : null,
-        specs: hasSpecs ? specs : null,
-        seoTitle: str(p.seoTitle),
-        seoDesc: str(p.seoDesc),
-      };
+    const commonData = {
+      name,
+      slug,
+      nameEn: str(p.nameEn),
+      description: str(p.description),
+      categoryId,
+      specs: hasSpecs ? specs : null,
+      seoTitle: str(p.seoTitle),
+      seoDesc: str(p.seoDesc),
+    };
 
       let product;
       let action: BulkResult["action"];
@@ -173,11 +161,6 @@ export async function POST(request: NextRequest) {
           "categoryId",
           commonData.categoryId ?? null,
           Object.prototype.hasOwnProperty.call(p, "categorySlug"),
-        );
-        setIfProvided(
-          "images",
-          commonData.images ?? null,
-          Object.prototype.hasOwnProperty.call(p, "images"),
         );
         setIfProvided(
           "specs",

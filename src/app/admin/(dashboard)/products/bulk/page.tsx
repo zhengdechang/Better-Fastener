@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 
-const PLACEHOLDER = `六角螺栓 M8,Hex Bolt M8,,高强度六角螺栓 M8 规格,汽车紧固件,,,,,,,,
-氧化黑碳钢平垫圈,Oxide Black HDG Flat Washer,FW-CS-0001,碳钢平垫圈 工业用,flat-washer,https://img1.jpg;https://img2.jpg,Carbon Steel,DIN 125,M3-M60,Zinc Plated,Grade 4.8/8.8,Automotive,,`;
+const PLACEHOLDER = `六角螺栓 M8,Hex Bolt M8,,高强度六角螺栓 M8 规格,汽车紧固件,Carbon Steel,DIN 125,M3-M60,Zinc Plated,Grade 4.8/8.8,Automotive,,
+氧化黑碳钢平垫圈,Oxide Black HDG Flat Washer,FW-CS-0001,碳钢平垫圈 工业用,flat-washer,Carbon Steel,DIN 125,M3-M60,Zinc Plated,Grade 4.8/8.8,Automotive,Construction,,`;
 
 type ProductInput = {
   name: string;
@@ -13,7 +13,6 @@ type ProductInput = {
   modelNo?: string;
   description?: string;
   categorySlug?: string;
-  images?: string[];
   material?: string;
   standard?: string;
   size?: string;
@@ -26,10 +25,9 @@ type ProductInput = {
 type Result = { name: string; slug: string; ok: boolean; error?: string };
 
 function productToRow(p: ProductInput): string[] {
-  const imgs = Array.isArray(p.images) ? p.images.join(";") : "";
   return [
     p.name, p.nameEn || "", p.modelNo || "", p.description || "", p.categorySlug || "",
-    imgs, p.material || "", p.standard || "", p.size || "", p.surfaceTreatment || "",
+    p.material || "", p.standard || "", p.size || "", p.surfaceTreatment || "",
     p.hardness || "", p.application || "", p.seoTitle || "", p.seoDesc || "",
   ];
 }
@@ -76,22 +74,20 @@ function parseCSV(content: string): ProductInput[] {
       }
     }
     parts.push(part.trim());
-    const imgs = (parts[5] || "").split(/[;|]/).map((s) => s.trim()).filter(Boolean);
     return {
       name: parts[0] || "",
       nameEn: parts[1] || undefined,
       modelNo: parts[2] || undefined,
       description: parts[3] || undefined,
       categorySlug: parts[4] || undefined,
-      images: imgs.length ? imgs : undefined,
-      material: parts[6] || undefined,
-      standard: parts[7] || undefined,
-      size: parts[8] || undefined,
-      surfaceTreatment: parts[9] || undefined,
-      hardness: parts[10] || undefined,
-      application: parts[11] || undefined,
-      seoTitle: parts[12] || undefined,
-      seoDesc: parts[13] || undefined,
+      material: parts[5] || undefined,
+      standard: parts[6] || undefined,
+      size: parts[7] || undefined,
+      surfaceTreatment: parts[8] || undefined,
+      hardness: parts[9] || undefined,
+      application: parts[10] || undefined,
+      seoTitle: parts[11] || undefined,
+      seoDesc: parts[12] || undefined,
     };
   });
 }
@@ -105,12 +101,6 @@ function parseJSON(content: string): ProductInput[] {
       const val = row[key] ?? alts.reduce((a, k) => a ?? row[k], null as unknown);
       return val != null ? String(val).trim() || undefined : undefined;
     };
-    const imgs = row.images ?? row.图片;
-    const images = Array.isArray(imgs)
-      ? (imgs as unknown[]).map((u) => String(u).trim()).filter(Boolean)
-      : typeof imgs === "string"
-        ? imgs.split(/[;|]/).map((s) => s.trim()).filter(Boolean)
-        : undefined;
     const specs = row.specs && typeof row.specs === "object" && !Array.isArray(row.specs) ? (row.specs as Record<string, unknown>) : {};
     return {
       name: String(row.name ?? row.名称 ?? "").trim(),
@@ -118,7 +108,6 @@ function parseJSON(content: string): ProductInput[] {
       modelNo: v("modelNo", "model_no", "型号"),
       description: v("description", "描述"),
       categorySlug: v("categorySlug", "category_slug", "分类"),
-      images: images?.length ? images : undefined,
       material: v("material", "材质") ?? (specs.material ? String(specs.material).trim() : undefined),
       standard: v("standard", "标准") ?? (specs.standard ? String(specs.standard).trim() : undefined),
       size: v("size", "规格") ?? (specs.size ? String(specs.size).trim() : undefined),
@@ -137,7 +126,6 @@ const EXCEL_COL_MAP: { keys: string[]; field: keyof ProductInput }[] = [
   { keys: ["modelno", "model_no", "型号"], field: "modelNo" },
   { keys: ["desc", "description", "描述"], field: "description" },
   { keys: ["category", "categoryslug", "分类"], field: "categorySlug" },
-  { keys: ["images", "图片"], field: "images" },
   { keys: ["material", "材质"], field: "material" },
   { keys: ["standard", "标准"], field: "standard" },
   { keys: ["size", "规格"], field: "size" },
@@ -166,12 +154,10 @@ function parseExcel(buffer: ArrayBuffer): ProductInput[] {
     }
     return -1;
   };
-  const getVal = (field: keyof ProductInput, colIdx: number, r: (string | number)[]): string | string[] | undefined => {
+  const getVal = (field: keyof ProductInput, colIdx: number, r: (string | number)[]): string | undefined => {
     if (colIdx < 0 || !r || r[colIdx] == null) return undefined;
     const v = String(r[colIdx]).trim();
-    if (!v) return undefined;
-    if (field === "images") return v.split(/[;|]/).map((s) => s.trim()).filter(Boolean);
-    return v;
+    return v || undefined;
   };
   const products: ProductInput[] = [];
   const fieldToCol = (field: keyof ProductInput): number => {
@@ -205,22 +191,20 @@ function parseLines(text: string): ProductInput[] {
   return lines.map((line) => {
     const sep = line.includes("\t") ? "\t" : ",";
     const parts = line.split(sep).map((p) => p.trim());
-    const imgs = (parts[5] || "").split(/[;|]/).map((s) => s.trim()).filter(Boolean);
     return {
       name: parts[0] || "",
       nameEn: parts[1] || undefined,
       modelNo: parts[2] || undefined,
       description: parts[3] || undefined,
       categorySlug: parts[4] || undefined,
-      images: imgs.length ? imgs : undefined,
-      material: parts[6] || undefined,
-      standard: parts[7] || undefined,
-      size: parts[8] || undefined,
-      surfaceTreatment: parts[9] || undefined,
-      hardness: parts[10] || undefined,
-      application: parts[11] || undefined,
-      seoTitle: parts[12] || undefined,
-      seoDesc: parts[13] || undefined,
+      material: parts[5] || undefined,
+      standard: parts[6] || undefined,
+      size: parts[7] || undefined,
+      surfaceTreatment: parts[8] || undefined,
+      hardness: parts[9] || undefined,
+      application: parts[10] || undefined,
+      seoTitle: parts[11] || undefined,
+      seoDesc: parts[12] || undefined,
     };
   });
 }
@@ -349,7 +333,7 @@ export default function BulkImportPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-zinc-500">
-            完整列顺序：名称,英文名,型号,描述,分类,图片URL(分号分隔),材质,标准,规格,表面处理,硬度,应用,SEO标题,SEO描述
+            列顺序：名称,英文名,型号,描述,分类,材质,标准,规格,表面处理,硬度,应用,SEO标题,SEO描述（不含图片，图片在商品编辑页单独上传）
           </p>
         </div>
         <div>
