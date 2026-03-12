@@ -1,8 +1,11 @@
 import Link from "next/link";
+import HomeBanner from "@/components/HomeBanner";
 
 export default function HomePage() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-20">
+    <>
+      <HomeBanner />
+      <section className="mx-auto max-w-6xl px-4 py-20">
           <h1 className="text-4xl font-bold text-zinc-900">
             Better Fasteners Co., Ltd.
           </h1>
@@ -24,5 +27,6 @@ export default function HomePage() {
             </Link>
           </div>
     </section>
+    </>
   );
 }

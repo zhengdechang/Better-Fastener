@@ -31,6 +31,18 @@ export default async function AdminDashboardLayout({
               商品管理
             </Link>
             <Link
+              href="/admin/banners"
+              className="block rounded px-3 py-2 text-zinc-700 hover:bg-zinc-100"
+            >
+              Banner 管理
+            </Link>
+            <Link
+              href="/admin/storage"
+              className="block rounded px-3 py-2 text-zinc-700 hover:bg-zinc-100"
+            >
+              存储管理
+            </Link>
+            <Link
               href="/admin/settings"
               className="block rounded px-3 py-2 text-zinc-700 hover:bg-zinc-100"
             >
