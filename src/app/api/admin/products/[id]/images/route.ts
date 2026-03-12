@@ -50,10 +50,11 @@ export async function POST(
         { status: 503 }
       );
     }
-    // 使用 Blob 的读写 Token，将文件写入私有存储
+    // 使用 Blob 的读写 Token，将文件写入私有存储；文件名重复时自动加随机后缀
     const blob = await put(`products/${id}/${file.name}`, file, {
       access: "private",
       token: process.env.BLOB_READ_WRITE_TOKEN,
+      addRandomSuffix: true,
     });
     newUrl = blob.url;
   } else {
