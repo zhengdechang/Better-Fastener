@@ -44,16 +44,9 @@ export async function POST(
     if (!file || !file.type.startsWith("image/")) {
       return Response.json({ error: "请上传图片文件" }, { status: 400 });
     }
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return Response.json(
-        { error: "未配置 BLOB_READ_WRITE_TOKEN，请使用 URL 添加图片" },
-        { status: 503 }
-      );
-    }
-    // 使用 Blob 的读写 Token，将文件写入私有存储；文件名重复时自动加随机后缀
+    // 使用 Blob 的读写 Token 写入「公开」存储；文件名重复时自动加随机后缀
     const blob = await put(`products/${id}/${file.name}`, file, {
-      access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      access: "public",
       addRandomSuffix: true,
     });
     newUrl = blob.url;

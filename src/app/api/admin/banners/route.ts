@@ -84,10 +84,9 @@ export async function POST(request: NextRequest) {
     if (!file || !file.type.startsWith("image/")) {
       return Response.json({ error: "请上传图片" }, { status: 400 });
     }
-    // 使用 Blob 的读写 Token，将文件写入私有存储；文件名重复时自动加随机后缀
+    // 使用 Blob 的读写 Token 写入「公开」存储；文件名重复时自动加随机后缀
     const blob = await put(`banners/${file.name}`, file, {
-      access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      access: "public",
       addRandomSuffix: true,
     });
     url = blob.url;
