@@ -84,7 +84,11 @@ export async function POST(request: NextRequest) {
     if (!file || !file.type.startsWith("image/")) {
       return Response.json({ error: "请上传图片" }, { status: 400 });
     }
-    const blob = await put(`banners/${file.name}`, file, { access: "public" });
+    // 使用 Blob 的读写 Token，将文件写入私有存储
+    const blob = await put(`banners/${file.name}`, file, {
+      access: "private",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
     url = blob.url;
   } else {
     return Response.json({ error: "需要 JSON 或 multipart" }, { status: 400 });
